@@ -1,6 +1,6 @@
 let request = require("request");
 let cheerio = require("cheerio");
-let scoreCardObj = require("C:\\Users\\91895\\Desktop\\rev\\wcat\\Module_2_Webscrapping\\activity\\ipl activity\\scoreCard.js");
+let scoreCardObj = require("F:\\91895\\PP-12-21\\activity\\activity3ipl\\scoreCard.js");
 function allMatchPageCb(url){
     request(url, function (error, response, html){
     if(error){

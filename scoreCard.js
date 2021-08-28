@@ -1,9 +1,9 @@
- //let url = "https://www.espncricinfo.com/series/ipl-2020-21-1210595/mumbai-indians-vs-chennai-super-kings-1st-match-1216492/full-scorecard";
 let request = require("request");
 let cheerio = require("cheerio");
-//const path = require("path/posix");
-const { dir } = require("console");
-//const fs = require("fs");
+const path = require("path");
+//const { dir } = require("console");
+const fs = require("fs");
+const xlsx = require("xlsx");
 function processSinglematch(url){
 request(url, cb);}
 function cb(error, response, html){
@@ -58,55 +58,74 @@ function cb(error, response, html){
                     let sixes = searchTool(numberofTds[6]).text().trim();
                     let sr = searchTool(numberofTds[7]).text().trim();
                     console.log(`${playerName} ${runs} ${balls} ${fours} ${sixes} ${sr}`);
+                    processPlayer(teamName,playerName, runs, balls, fours, sixes, sr, opponentName, venue, date, result);
                     let fs = require("fs");
-                    
-                   let matchinfo = { "TeamName": teamName,
-                      "name": playerName,
-                      "venue": venue,
-                      "date": date,
-                      "opponent Team": opponentName,
-                      "result": result,
-                      "runs": runs,
-                      "Balls": balls,
-                      "4s": fours,
-                      "6s": sixes,
-                      "sr": sr,
                     }
-                    let path = require("path");
-                    let iplFolderPath = path.join(__dirname, "ipl");
-                    if(!fs.existsSync(iplFolderPath)){
+                  }
+                }
+                console.log("```````````````");
+              }//
+              function processPlayer(teamName, playerName, runs, balls, fours, sixes, sr, opponentName, venue, date, result) {
+                let teamPath = path.join(__dirname, "ipl", teamName);
+                // directory create if not created
+                dirCreater(teamPath);
+                let filePath = path.join(teamPath, playerName + ".xlsx");
+                // reads the content if file exists and returns an empty array file does not exist 
+                let content = excelReader(filePath, playerName);
+                let playerObj = {
+                    teamName,
+                    playerName,
+                    runs,
+                    balls,
+                    fours,
+                    sixes,
+                    sr,
+                    opponentName,
+                    venue,
+                    date,
+                    result
+                }
+                content.push(playerObj);
+                // excel write
+                excelWriter(filePath, content, playerName);
+            }
+            let iplFolderPath = path.join(__dirname, "ipl");
+                    if (!fs.existsSync(iplFolderPath)) {
                       fs.mkdirSync(iplFolderPath);
-                     }
-                       let folderPath = path.join(__dirname, "ipl", teamName);
-                       if(!fs.existsSync(folderPath)){
-                        fs.mkdirSync(folderPath);
-                       }
-                    //  
-                      let filePath = path.join(folderPath,playerName + ".json");
-                      let content = [];
-                      // let matchinfo ={
-                      //   teamName, playerName, venue, date, opponentName, result, runs, balls, fours, sixes, sr
-                      // }
-                      content.push(matchinfo);
-                      if(fs.existsSync(filePath)){
-                        let buffer = fs.readFileSync(filePath);
-                        content = JSON.parse(buffer);
-                      }
-                    
-                      content.push(matchinfo);
-                      fs.writeFileSync(filePath, JSON.stringify(content));
-                      
-
-
                     }
-  
-     }
-     
-          //  console.log("``````````````````");
-            //fs.writeFileSync(`innninf$(i + 1).html` , scoreCard);
-
-        }
-  }
-    module.exports = {
-      ps:  processSinglematch
-    }
+            function dirCreater(filePath) {
+            
+                if (fs.existsSync(filePath) == false) {
+                    fs.mkdirSync(filePath);
+                }
+            
+            }
+            function excelWriter(filePath, json, sheetName) {
+                // workbook create
+                let newWB = xlsx.utils.book_new();
+                // worksheet
+                let newWS = xlsx.utils.json_to_sheet(json);
+                xlsx.utils.book_append_sheet(newWB, newWS, sheetName);
+                // excel file create 
+                xlsx.writeFile(newWB, filePath);
+            }
+            // // json data -> excel format convert
+            // // -> newwb , ws , sheet name
+            // // filePath
+            // read 
+            //  workbook get
+            function excelReader(filePath, sheetName) {
+                if (fs.existsSync(filePath) == false) {
+                    return [];
+                }
+                // player workbook
+                let wb = xlsx.readFile(filePath);
+                // get data from a particular sheet in that wb
+                let excelData = wb.Sheets[sheetName];
+                // sheet to json 
+                let ans = xlsx.utils.sheet_to_json(excelData);
+                return ans;
+            }
+            module.exports = {
+              ps: processSinglematch
+            }
